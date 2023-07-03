@@ -1,0 +1,80 @@
+Qgis guidlines
+
+add geojson chi and cn files from LSDTopotools
+
+
+
+join attributes by location 
+
+chi intersect with 
+CN.  
+for my specific code I  only take the stream order attribute
+
+
+look at lsd.bil epsg crs number
+set the project crs to that number
+
+
+toolbox reproject layer to change joined layer
+
+processing.run("native:reprojectlayer", {'INPUT':'F:/LSDTopoTools/LSDTopoTools2/XXXX/lsd_shape.shp','TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:32612'),'OPERATION':'+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=utm +zone=12 +ellps=WGS84','OUTPUT':'F:/LSDTopoTools/LSDTopoTools2/XXX/lsd_shape.shp'})
+
+^^ THIS MAKES THE NEW BASIN SHAPE STUFF TEMPORARY THOUGH...  IF YOU NEED IT LATER SAVE IT MANUALLY 
+then turn raster all basins to vector 
+
+
+
+processing.run("gdal:polygonize", processing.run("gdal:polygonize", {'INPUT':'F:/LSDTopoTools/LSDTopoTools2/XXX/lsd_AllBasins.bil','BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':'F:/LSDTopoTools/LSDTopoTools2/XXXX/basin.shp'})
+
+temp option creates an fid
+
+
+processing.run("gdal:polygonize", {'INPUT':'F:/LSDTopoTools/LSDTopoTools2/XXX/lsd_AllBasins.bil','BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+Reproject joined chi and cn layer to match this crs
+
+join the channel info with the polygons created for the basins
+join by location tool, 
+the reprojected layer you just created are within vectorized
+
+for my specific code I just TAKE JUST TAKE FID attribute 
+
+
+processing.run("native:joinattributesbylocation", {'INPUT':'F:\\LSDTopoTools\\LSDTopoTools2\\xxx\\lsd_chi_data_map.shp|layername=lsd_chi_data_map','PREDICATE':[5],'JOIN':'C:/Users/mjrobinson/AppData/Local/Temp/processing_rFjGIW/01a1ca3be5544e55b1ec5dc0ccbe5117/OUTPUT.gpkg','JOIN_FIELDS':[],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+add x y data to the channel data
+
+processing.run("native:addxyfields", {'INPUT':'memory://Point?crs=EPSG:4326&field=latitude:double(23,15)&field=longitude:double(23,15)&field=basin_key:integer(9,0)&field=chi:double(23,15)&field=drainage_a:double(23,15)&field=elevation:double(23,15)&field=flow_dista:double(23,15)&field=source_key:integer(9,0)&field=fid:long(0,0)&field=DN:integer(0,0)&uid={a48434cc-712a-4566-a64a-fa3145f39c66}','CRS':QgsCoordinateReferenceSystem('EPSG:32604'),'PREFIX':'','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+export channels as channel1.csv
+
+
+
+
+convert basin polygons to lines
+
+processing.run("native:polygonstolines", {'INPUT':'C:/Users/mjrobinson/AppData/Local/Temp/processing_rFjGIW/01a1ca3be5544e55b1ec5dc0ccbe5117/OUTPUT.gpkg','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+
+
+then convert to points  extract vertices
+
+processing.run("native:extractvertices", {'INPUT':'memory://MultiLineString?crs=EPSG:32612&field=fid:long(0,0)&field=DN:integer(0,0)&uid={e218221f-fab7-45d9-b280-38a2a3eea531}','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+
+add x y data to the basins
+processing.run("native:addxyfields", {'INPUT':'memory://Point?crs=EPSG:4326&field=latitude:double(23,15)&field=longitude:double(23,15)&field=basin_key:integer(9,0)&field=chi:double(23,15)&field=drainage_a:double(23,15)&field=elevation:double(23,15)&field=flow_dista:double(23,15)&field=source_key:integer(9,0)&field=fid:long(0,0)&field=DN:integer(0,0)&uid={a48434cc-712a-4566-a64a-fa3145f39c66}','CRS':QgsCoordinateReferenceSystem('EPSG:32604'),'PREFIX':'','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+
+add z to the basins 
+processing.run("native:rastersampling", {'INPUT':'memory://Point?crs=EPSG:32604&field=fid:long(0,0)&field=DN:integer(0,0)&field=vertex_index:integer(10,0)&field=vertex_part:integer(10,0)&field=vertex_part_index:integer(10,0)&field=distance:double(20,14)&field=angle:double(20,14)&field=x:double(20,10)&field=y:double(20,10)&uid={b25c0a03-c778-404a-87e6-0150586e1375}','RASTERCOPY':'C:/Users/mjrobinson/Box/lsdtopotools/Kauai/lsd.bil','COLUMN_PREFIX':'SAMPLE_','OUTPUT':'TEMPORARY_OUTPUT'})
+
+
+
+export them as csv 
